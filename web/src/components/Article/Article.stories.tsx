@@ -15,8 +15,15 @@ import type { ComponentMeta } from '@storybook/react'
 
 import Article from './Article'
 
+const article = {
+  id: 1,
+  body: 'testing',
+  title: 'test',
+  createdAt: '1',
+}
+
 export const generated = () => {
-  return <Article />
+  return <Article article={article} />
 }
 
 export default {
