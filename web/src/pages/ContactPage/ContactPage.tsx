@@ -1,4 +1,9 @@
 import {
+  CreateContactMutation,
+  CreateContactMutationVariables,
+} from 'types/graphql'
+
+import {
   Form,
   TextField,
   TextAreaField,
@@ -6,22 +11,54 @@ import {
   SubmitHandler,
   FieldError,
   Label,
+  FormError,
+  useForm,
 } from '@redwoodjs/forms'
-import { MetaTags } from '@redwoodjs/web'
+import { MetaTags, useMutation } from '@redwoodjs/web'
+import { toast, Toaster } from '@redwoodjs/web/toast'
+
+const CREATE_CONTACT = gql`
+  mutation CreateContactMutation($input: CreateContactInput!) {
+    createContact(input: $input) {
+      id
+    }
+  }
+`
 
 interface FormValues {
-  input: string
+  email: string
+  name: string
+  message: string
 }
 
 const ContactPage = () => {
+  const formMethods = useForm()
+  const [create, { loading, error }] = useMutation<
+    CreateContactMutation,
+    CreateContactMutationVariables
+  >(CREATE_CONTACT, {
+    onCompleted: () => {
+      toast.success('Thank you for your submission!')
+      formMethods.reset()
+    },
+  })
+
   const onSubmit: SubmitHandler<FormValues> = (data) => {
+    create({ variables: { input: data } })
     console.log(data)
   }
   return (
     <>
+      <Toaster />
       <MetaTags title="Contact" description="Contact page" />
 
-      <Form onSubmit={onSubmit} config={{ mode: 'onBlur' }}>
+      <Form
+        onSubmit={onSubmit}
+        config={{ mode: 'onBlur' }}
+        error={error}
+        formMethods={formMethods}
+      >
+        <FormError error={error} wrapperClassName="form-error" />
         <Label errorClassName="error" name="name">
           Name
         </Label>
@@ -39,10 +76,10 @@ const ContactPage = () => {
           name="email"
           validation={{
             required: true,
-            pattern: {
-              value: /^[^@]+@[^.]+\..+$/,
-              message: 'Please enter a valid email address',
-            },
+            // pattern: {
+            //   value: /^[^@]+@[^.]+\..+$/,
+            //   // message: 'Please enter a valid email address',
+            // },
           }}
           errorClassName="error"
         />
@@ -58,7 +95,7 @@ const ContactPage = () => {
         />
         <FieldError name="message" className="error" />
 
-        <Submit>Save</Submit>
+        <Submit disabled={loading}>Save</Submit>
       </Form>
     </>
   )
